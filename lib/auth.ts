@@ -116,6 +116,54 @@ export function digest(
   return hash.digest("hex");
 }
 
+export function digestAlgorithm(
+  username: string | Buffer,
+  realm: string | Buffer,
+  password: string | Buffer,
+  nonce: string | Buffer,
+  httpMethod: string | Buffer,
+  uri: string | Buffer,
+  qop?: string | Buffer,
+  body?: string | Buffer,
+  cnonce?: string | Buffer,
+  nc?: string | Buffer,
+  algorithm?: string | Buffer,
+): string {
+  const ha1 = createHash(algorithm);
+  ha1.update(username).update(":").update(realm).update(":").update(password);
+
+  const ha1d = ha1.digest("hex");
+
+  const ha2 = createHash(algorithm);
+  ha2.update(httpMethod).update(":").update(uri);
+
+  if (qop === "auth-int") {
+    const bodyHash = createHash(algorithm)
+      .update(body || "")
+      .digest("hex");
+    ha2.update(":").update(bodyHash);
+  }
+
+  const ha2d = ha2.digest("hex");
+
+  const hash = createHash(algorithm);
+  hash.update(ha1d).update(":").update(nonce);
+  if (qop) {
+    hash
+      .update(":")
+      .update(nc)
+      .update(":")
+      .update(cnonce)
+      .update(":")
+      .update(qop);
+  }
+  hash.update(":").update(ha2d);
+
+  return hash.digest("hex");
+}
+
+
+
 export function solveDigest(
   username: string | Buffer,
   password: string | Buffer,
@@ -134,7 +182,7 @@ export function solveDigest(
     else qop = authHeader.qop;
   }
 
-  const hash = digest(
+  let hash = digest(
     username,
     authHeader.realm,
     password,
@@ -146,6 +194,23 @@ export function solveDigest(
     cnonce,
     nc,
   );
+
+  //TO SUPPRT: 
+  // When 2 or more algorithms in HTTP header in 401 Authentication requet from CPE
+  if (authHeader.algorithm)
+    hash = digestAlgorithm(
+      username,
+      authHeader.realm,
+      password,
+      authHeader.nonce,
+      httpMethod,
+      uri,
+      qop,
+      body,
+      cnonce,
+      nc,
+      authHeader.algorithm.toLowerCase(),
+      );
 
   let authString = `Digest username="${username}"`;
   authString += `,realm="${authHeader.realm}"`;
