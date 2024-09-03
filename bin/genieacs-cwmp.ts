@@ -60,11 +60,16 @@ if (!cluster.worker) {
 } else {
   const key = config.get("CWMP_SSL_KEY") as string;
   const cert = config.get("CWMP_SSL_CERT") as string;
+  // TO SUPPORT:
+  // CPE certificate verifiation if CA provided
+  const ca = config.get("CWMP_SSL_CA") as string;
 
   const options = {
     port: SERVICE_PORT,
     host: SERVICE_ADDRESS,
-    ssl: key && cert ? { key, cert } : null,
+    // TO SUPPORT:
+    // CPE certificate verification if CA provided
+    ssl: key & cert & ca ? { key, cert, ca } : key && cert ? { key, cert } : null,
     onConnection: cwmp.onConnection,
     onClientError: cwmp.onClientError,
     timeout: 30000,
