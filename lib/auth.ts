@@ -196,7 +196,7 @@ export function solveDigest(
   );
 
   //TO SUPPRT: 
-  // When 2 or more algorithms in HTTP header in 401 Authentication requet from CPE
+  // When CPE require MD5 and/or SHA256 algorithms in 401 Authentication requet packet.
   if (authHeader.algorithm)
     hash = digestAlgorithm(
       username,
