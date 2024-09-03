@@ -101,11 +101,22 @@ export function start(
   };
 
   if (options.ssl) {
-    const opts = {
-      key: getValidPrivKeys(options.ssl.key),
-      cert: getValidCerts(options.ssl.cert),
-    };
-
+    //TO SUPPORT:
+    // CPE Certificate verification if CA provided
+    if (options.ssl.ca) {
+      var opts = {
+        key: getValidPrivKeys(options.ssl.key),
+        cert: getValidCerts(options.ssl.cert),
+        ca: [ readFileSync( options.ssl.ca ) ],
+        requestCert: true
+        rejectUnauthorized: true,
+      };
+    } else {
+      var opts = {
+        key: getValidPrivKeys(options.ssl.key),
+        cert: getValidCerts(options.ssl.cert),
+      };
+    }
     server = https.createServer(opts, listener);
     if (options.onConnection)
       server.on("secureConnection", options.onConnection);
